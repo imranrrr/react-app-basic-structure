@@ -2,50 +2,38 @@ import axios from "axios";
 import "dotenv/config";
 import { useDispatch } from "react-redux";
 import { logoutSuccess } from "./redux/slices/auth";
-export const userSigninApi = (user) => {
-  request({
-    url: `/api/users/signin`,
-    method: "POST",
-    data: { ...user },
-  });
+
+const baseURL = "http://localhost:3000";
+
+export const userSigninApi = async (user) => {
+  postRequest({ url: "/users/login", data: { user: { ...user } } }, true);
 };
 
-const client = axios.create({
-  baseURL: SERVER_URL,
-  withCredentials: true,
-  headers: {
-    "Content-type": "application/json",
-  },
-});
-
-const request = function (options) {
-  const onSuccess = function (response) {
-    return response.data;
-  };
-
-  const onError = function (error) {
-    console.error("Request Failed:", error.config);
-
-    if (error.response) {
-      console.log(error.response);
-      // Request was made but server responded with something
-      // other than 2xx
-      if (error.response.status == 401) {
-        console.log("set user to null");
-        useDispatch(logoutSuccess());
-      }
-      if (error.response.data) alert(error.response.data?.error);
-      console.error("Status:", error.response.status);
-      console.error("Data:", error.response.data);
-      console.error("Headers:", error.response.headers);
-    } else {
-      // Something else happened while setting up the request
-      // triggered the error
-      console.error("Error Message:", error.message);
+const onError = function (error) {
+  console.error("Request Failed:", error.config);
+  if (error.response) {
+    console.log(error.response);
+    if (error.response.status == 401) {
+      console.log("set user to null");
     }
+    if (error.response.data) alert(error.response.data?.error);
+    console.error("Status:", error.response.status);
+    console.error("Data:", error.response.data);
+    console.error("Headers:", error.response.headers);
+  } else {
+    console.error("Error Message:", error.message);
+  }
+  return Promise.reject(error.response || error.message);
+};
 
-    return Promise.reject(error.response || error.message);
-  };
+const onSuccess = function (response) {
+  debugger;
+  return response.data;
+};
 
-  return client(options).then(onSuccess).catch(onError);
+const postRequest = async (request, auth = false) => {
+  await axios
+    .post(`${baseURL}/${request.url}`, request.data)
+    .then(onSuccess)
+    .catch(onError);
 };
